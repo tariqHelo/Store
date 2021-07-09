@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use stdClass;
 use Traversable;
 use Illuminate\Support\Str;
+use App\Http\Requests\CategoryRequest;
+
 
 class CategoriesController extends Controller
 {
@@ -45,7 +49,7 @@ class CategoriesController extends Controller
         //     ->orderBy('name', 'ASC')
         //     ->get();
 
-
+        $success = session()->get('success');
         /*$categories = [];
         if ($categories instanceof Traversable) {
             echo 'Yes';
@@ -55,6 +59,7 @@ class CategoriesController extends Controller
         return view('admin.categories.index', [
             'categories' => $entries,
             'title' => 'Categories List',
+            'success' => $success,
         ]);
     }
 
@@ -116,7 +121,8 @@ class CategoriesController extends Controller
         // ]);
         //$category->save();
 
-        return redirect()->route('categories.index');
+        return redirect()->route('categories.index')
+        ->with('success', 'Category created');
     }
 
     /**
@@ -138,7 +144,13 @@ class CategoriesController extends Controller
      */
     public function edit($id)
     {
-        //
+        $category = Category::find($id);
+        $parents = Category::where('id' , '<>' , $category->id)->get();
+
+        return view('admin.categories.edit')
+        ->withCategory($category)
+        ->withParents($parents);
+
     }
 
     /**
@@ -148,9 +160,43 @@ class CategoriesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(CategoryRequest $request, $id)
     {
+        /*$rules = [
+            'name' => 'required|string|max:255|min:3|unique:categories',
+            'parent_id' => 'nullable|int|exists:categories,id',
+            'description' => 'nullable|min:5',
+            'status' => 'required|in:active,draft',
+            'image' => 'image|max:512000|dimensions:min_width=300,min_height=300',
+        ];
+        $clean = $request->validate($rules);*/
+        
+        $request->merge([
+            'slug' => Str::slug($request->name)
+        ]);
+
+        // Mass assignemnt
+        //Category::where('id', '=', $id)->update( $request->all() );
+
         //
+        $category = Category::find($id);
+        
+        // Method #1
+        /*$category->name = $request->post('name');
+        $category->parent_id = $request->post('parent_id');
+        $category->description = $request->post('description');
+        $category->status = $request->post('status');
+        $category->save();*/
+
+        # Method #2: Mass assignemnt
+        $category->update( $request->all() );
+
+        # Method #3: Mass assignment
+        //$category->fill( $request->all() )->save();
+
+        // PRG
+        return redirect()->route('categories.index')
+            ->with('success', 'Category updated');
     }
 
     /**
@@ -161,6 +207,9 @@ class CategoriesController extends Controller
      */
     public function destroy($id)
     {
-        //
+        Category::destroy($id);
+
+        return redirect()->route('categories.index')
+          ->with('success', 'Category deleted');
     }
 }

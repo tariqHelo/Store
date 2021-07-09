@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 
-@section('title', 'Create New Category')
+@section('title', 'Edit Category')
 
 @section('breadcrumb')
 <ol class="breadcrumb float-sm-right">
@@ -13,15 +13,14 @@
 
 @section('content')
 
-<form action="{{ route('categories.store') }}" method="post">
+<form action="{{ route('categories.update' , $category->id) }}" method="post" enctype="multipart/form-data">
 
-    <input type="hidden" name="_token" value="{{ csrf_token() }}">
-    {{ csrf_field() }}
-    @csrf
+      @csrf
+      @method('put')
 
-     @include('admin.categories._form'[
-         'button' => 'Add',
-     ])
+    @include('admin.categories._form', [
+        'button' => 'Update'
+    ])
 </form>
 
 @endsection
