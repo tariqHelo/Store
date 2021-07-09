@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\ProductsController;
 use App\Http\Controllers\Admin\CategoriesController;
-use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,3 +29,4 @@ Route::put('/admin/categories/{id}', [CategoriesController::class, 'update'])->n
 Route::delete('/admin/categories/{id}', [CategoriesController::class, 'destroy'])->name('categories.destroy');
 
 // Route::resource('/admin/categories', 'Admin\CategoriesController');
+Route::resource('/admin/products', 'Admin\ProductsController');
