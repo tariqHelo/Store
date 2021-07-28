@@ -13,15 +13,12 @@
 
 @section('content')
 
-<form action="{{ route('categories.store') }}" method="post">
-
-    <input type="hidden" name="_token" value="{{ csrf_token() }}">
-    {{ csrf_field() }}
+<form action="{{ route('categories.store') }}" method="post" enctype="multipart/form-data">
     @csrf
 
-     @include('admin.categories._form'[
-         'button' => 'Add',
-     ])
+    @include('admin.categories._form', [
+        'button' => 'Add',
+    ])
 </form>
 
 @endsection

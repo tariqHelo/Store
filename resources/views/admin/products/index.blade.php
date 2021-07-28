@@ -1,7 +1,15 @@
 @extends('layouts.admin')
 
 @section('title')
-Products <a href="{{ route('products.create') }}">Create</a>
+<div class="d-flex justify-content-between">
+    <h2>Products</h2>
+    <div class="">
+        @can('create', App\Models\Product::class)
+        <a class="btn btn-sm btn-outline-primary" href="{{ route('products.create') }}">Create</a>
+        @endcan
+        <a class="btn btn-sm btn-outline-dark" href="{{ route('products.trash') }}">Trash</a>
+    </div>
+</div>
 @endsection
 
 @section('breadcrumb')
@@ -12,12 +20,13 @@ Products <a href="{{ route('products.create') }}">Create</a>
 @endsection
 
 @section('content')
+    
+    <x-alert />
 
-    @if (Session::has('success'))
-    <div class="alert alert-success">
-        {{ Session::get('success') }}
-    </div>
-    @endif
+    <x-message type="info" :count="1 + 1" class="display-1">
+        <x-slot name="title">Info</x-slot>
+        Welcome to Laravel
+    </x-message>
 
     <table class="table">
         <thead>
@@ -36,19 +45,26 @@ Products <a href="{{ route('products.create') }}">Create</a>
         <tbody>
             @foreach($products as $product)
             <tr>
-                <td><img src="{{ asset('uploads/' . $product->image_path) }}" width="60" alt=""></td>
+                <td><img src="{{ $product->image_url }}" width="60" alt=""></td>
                 <td>{{ $product->name }}</td>
                 <td>{{ $product->category_name }}</td>
-                <td>{{ $product->price }}</td>
+                <td>{{ $product->formatted_price }}</td>
                 <td>{{ $product->quantity }}</td>
                 <td>{{ $product->status }}</td>
                 <td>{{ $product->created_at }}</td>
-                <td><a href="{{ route('products.edit', $product->id) }}" class="btn btn-sm btn-dark">Edit</a></td>
-                <td><form action="{{ route('products.destroy', $product->id) }}" method="post">
+                <td>
+                @can('update', $product)    
+                <a href="{{ route('products.edit', $product->id) }}" class="btn btn-sm btn-dark">Edit</a>
+                @endcan
+                </td>
+                <td>@can('delete', $product)
+                    <form action="{{ route('products.destroy', $product->id) }}" method="post">
                     @csrf
                     @method('delete')
                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                </form></td>
+                </form>
+                @endcan
+                </td>
             </tr>
             @endforeach
         </tbody>

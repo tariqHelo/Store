@@ -3,19 +3,24 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
-use stdClass;
-use Traversable;
 use Illuminate\Support\Str;
-use App\Http\Requests\CategoryRequest;
-
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
+use Throwable;
 
 class CategoriesController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware(['auth']);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -32,7 +37,7 @@ class CategoriesController extends Controller
         ORDER BY created_at DESC, name ASC
         */
         // return collection of Category model object
-        $entries = Category::leftJoin('categories as parents', 'parents.id', '=', 'categories.parent_id')
+        /* $entries = Category::leftJoin('categories as parents', 'parents.id', '=', 'categories.parent_id')
             ->select([
                 'categories.*',
                 'parents.name as parent_name'
@@ -40,21 +45,27 @@ class CategoriesController extends Controller
             //->where('categories.status', '=', 'active')
             ->orderBy('categories.created_at', 'DESC')
             ->orderBy('categories.name', 'ASC')
+            ->withTrashed()
             ->get();
-
+*/
         // return collection of stdObj object
-        // $entries = DB::table('categories')
-        //     ->where('status', '=', 'active')
-        //     ->orderBy('created_at', 'DESC')
-        //     ->orderBy('name', 'ASC')
-        //     ->get();
+        /*$entries = DB::table('categories')
+            ->where('status', '=', 'active')
+            ->orderBy('created_at', 'DESC')
+            ->orderBy('name', 'ASC')
+            ->get();*/
 
-        $success = session()->get('success');
+
         /*$categories = [];
         if ($categories instanceof Traversable) {
             echo 'Yes';
             return;
         }*/
+
+        $entries = Category::withCount('products as count')->get();
+        //dd($categories);
+        $success = session()->get('success');
+        //session()->forget('success');
 
         return view('admin.categories.index', [
             'categories' => $entries,
@@ -70,10 +81,9 @@ class CategoriesController extends Controller
      */
     public function create()
     {
-
-        
         $parents = Category::all();
-        return view('admin.categories.create', compact('parents'));
+        $category = new Category();
+        return view('admin.categories.create', compact('category', 'parents'));
     }
 
     /**
@@ -82,11 +92,41 @@ class CategoriesController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CategoryRequest $request)
     {
+        // Validation rules
+        $rules = [
+            'name' => 'required|string|max:255|min:3|unique:categories',
+            'parent_id' => 'required|int|exists:categories,id',
+            'description' => 'nullable|min:5',
+            'status' => 'required|in:active,draft',
+            'image' => 'image|max:512000|dimensions:min_width=300,min_height=300',
+        ];
+        /*$clean = $request->validate($rules, [
+            'required' => 'The :attribute required!',
+            'parent_id.required' => 'The parent is required!',
+        ]);*/
+        //$clean = $this->validate($request, $rules, []);
+
+        /*$data = $request->all();
+        $validator = Validator::make($data, $rules, []);
+        //$clean = $validator->validate();
+        try {
+            $clean = $validator->validated();
+        } catch (Throwable $e) {
+            //return $validator->failed();
+            return redirect()->back()->withErrors($validator)
+                ->withInput();
+        }*/
+
+        /*if ($validator->fails()) {
+            //$errors = $validator->errors();
+            return redirect()->back()->withErrors($validator);
+        }*/
+
         // Request Merge
         $request->merge([
-            'slug' => Str::slug($request->post('name')),
+            'slug' => Str::slug($request->name),
             'status' => 'active',
         ]);
 
@@ -123,8 +163,9 @@ class CategoriesController extends Controller
         // ]);
         //$category->save();
 
+        // PRG
         return redirect()->route('categories.index')
-        ->with('success', 'Category created');
+            ->with('success', 'Category created');
     }
 
     /**
@@ -133,9 +174,9 @@ class CategoriesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Category $category)
     {
-        //
+        return $category->products->count();
     }
 
     /**
@@ -146,13 +187,14 @@ class CategoriesController extends Controller
      */
     public function edit($id)
     {
-        $category = Category::find($id);
-        $parents = Category::where('id' , '<>' , $category->id)->get();
+        //$category = Category::where('id', '=', $id)->first();
+        $category = Category::findOrFail($id);
+        if (!$category) {
+            abort(404);
+        }
+        $parents = Category::withTrashed()->where('id', '<>', $category->id)->get();
 
-        return view('admin.categories.edit')
-        ->withCategory($category)
-        ->withParents($parents);
-
+        return view('admin.categories.edit', compact('category', 'parents'));
     }
 
     /**
@@ -164,15 +206,20 @@ class CategoriesController extends Controller
      */
     public function update(CategoryRequest $request, $id)
     {
+        //$request->route('id');
         /*$rules = [
-            'name' => 'required|string|max:255|min:3|unique:categories',
+            'name' => ['required', 'string', 'max:255', 'min:3',
+                'unique:categries,id,' . $id,
+                Rule::unique('categories', 'id')->ignore($id),
+                (new Unique('categories', 'id'))->ignore($id),
+            ],
             'parent_id' => 'nullable|int|exists:categories,id',
             'description' => 'nullable|min:5',
             'status' => 'required|in:active,draft',
             'image' => 'image|max:512000|dimensions:min_width=300,min_height=300',
         ];
         $clean = $request->validate($rules);*/
-        
+
         $request->merge([
             'slug' => Str::slug($request->name)
         ]);
@@ -182,7 +229,7 @@ class CategoriesController extends Controller
 
         //
         $category = Category::find($id);
-        
+
         // Method #1
         /*$category->name = $request->post('name');
         $category->parent_id = $request->post('parent_id');
@@ -191,7 +238,7 @@ class CategoriesController extends Controller
         $category->save();*/
 
         # Method #2: Mass assignemnt
-        $category->update( $request->all() );
+        $category->update($request->all());
 
         # Method #3: Mass assignment
         //$category->fill( $request->all() )->save();
@@ -209,9 +256,27 @@ class CategoriesController extends Controller
      */
     public function destroy($id)
     {
+        // Method #1
+        // $category = Category::find($id);
+        // $category->delete();
+
+        // Method #2
         Category::destroy($id);
 
+        // Method #3
+        // Category::where('id', '=', $id)->delete();
+
+        // Write into session
+        //Session::put();
+        //session()->put('success', 'Category deleted');
+        // session([
+        //     'success' => 'Category deleted!',
+        // ]);
+
+        //session()->flash('success', 'Category deleted');
+
+        // PRG
         return redirect()->route('categories.index')
-          ->with('success', 'Category deleted');
+            ->with('success', 'Category deleted');
     }
 }

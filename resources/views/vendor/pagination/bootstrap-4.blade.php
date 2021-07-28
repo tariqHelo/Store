@@ -1,4 +1,5 @@
 @if ($paginator->hasPages())
+<div class="d-flex">
     <nav>
         <ul class="pagination">
             {{-- Previous Page Link --}}
@@ -43,4 +44,16 @@
             @endif
         </ul>
     </nav>
+    <div class="ml-auto">
+        <p class="text-sm text-gray-700 leading-5">
+            {!! __('Showing') !!}
+            <span class="font-medium">{{ $paginator->firstItem() }}</span>
+            {!! __('to') !!}
+            <span class="font-medium">{{ $paginator->lastItem() }}</span>
+            {!! __('of') !!}
+            <span class="font-medium">{{ $paginator->total() }}</span>
+            {!! __('results') !!}
+        </p>
+    </div>
+</div>
 @endif
