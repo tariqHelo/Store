@@ -19,6 +19,8 @@ class ProductsController extends Controller
      */
     public function index()
     {
+
+        
         $products = Product::join('categories' , 'categories.id' ,'=' ,'products.category_id')
         ->select([
             'products.*',
