@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Admin\CategoriesController;
 use App\Http\Controllers\Admin\ProductsController;
+use App\Http\Controllers\Admin\ProfilesController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\RatingsController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -27,7 +29,7 @@ require __DIR__ . '/auth.php';
 
 Route::get('/admin/categories', 'Admin\CategoriesController@index')
     ->name('categories.index')
-    ->middleware(['auth']);
+    ->middleware(['auth', 'can:categories.view-any']);
 Route::get('/admin/categories/create', [CategoriesController::class, 'create'])
     ->name('categories.create')
     ->middleware(['auth', 'can:categories.create']);
@@ -57,3 +59,11 @@ Route::resource('/admin/products', 'Admin\ProductsController')
 
 Route::resource('/admin/roles', 'Admin\RolesController')
     ->middleware(['auth']);
+
+Route::resource('/admin/countries', 'Admin\CountriesController')
+    ->middleware(['auth']);
+
+Route::post('ratings/{type}', [RatingsController::class, 'store'])
+    ->where('type', 'profile|product');
+
+Route::get('admin/profiles/{profile}', [ProfilesController::class, 'show']);
