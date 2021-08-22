@@ -1,12 +1,16 @@
 <?php
 
 use App\Http\Controllers\Admin\CategoriesController;
+use App\Http\Controllers\Admin\NotificationsController;
 use App\Http\Controllers\Admin\ProductsController;
 use App\Http\Controllers\Admin\ProfilesController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MessagesController;
 use App\Http\Controllers\RatingsController;
 use App\Http\Middleware\CheckUserType;
+use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +38,9 @@ Route::namespace('Admin')
     ->prefix('{lang}/admin')
     ->middleware(['auth', 'auth.type:admin,super-admin'])
     ->group(function () {
+
+        Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications');
+        Route::get('notifications/{id}', [NotificationsController::class, 'show'])->name('notifications.read');
 
         Route::group([
             'prefix' => '/categories',
@@ -77,6 +84,8 @@ Route::namespace('Admin')
         Route::get('profiles/{profile}', [ProfilesController::class, 'show']);
     });
 
+Route::get('products', 'ProductsController@index')->name('products');
+Route::get('products/{slug}', 'ProductsController@show')->name('product.details');
 
 
 Route::post('ratings/{type}', [RatingsController::class, 'store'])
@@ -84,3 +93,15 @@ Route::post('ratings/{type}', [RatingsController::class, 'store'])
 
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
 Route::post('/cart', [CartController::class, 'store']);
+
+Route::get('/checkout', [CheckoutController::class, 'create'])->name('checkout');
+Route::post('/checkout', [CheckoutController::class, 'store']);
+
+Route::get('/orders', function () {
+    return Order::all();
+})->name('orders');
+
+
+Route::get('chat', [MessagesController::class, 'index'])->name('chat');
+Route::post('chat', [MessagesController::class, 'store']);
+
