@@ -5,10 +5,10 @@ namespace App\Providers;
 use App\Models\Product;
 use App\Models\Profile;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,8 +30,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-      Schema::defaultStringLength(191);
-
+        JsonResource::withoutWrapping();
+        
         Relation::morphMap([
             'product' => Product::class,
             'profile' => Profile::class,
